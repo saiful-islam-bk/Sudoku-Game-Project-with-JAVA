@@ -1,4 +1,4 @@
-  //package sudocugame;
+  package sudocugame;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Font;
@@ -18,6 +18,9 @@ public class SudocuGame extends JFrame{
   private int selectedRow = -1, selectedCol = -1;
   private int hint=0;
   private JButton hintBtn;
+  private Timer timer;
+  private int timeleft;
+  private JLabel timerLabel;
 
 
   // Constructor
@@ -34,7 +37,7 @@ public class SudocuGame extends JFrame{
 
     setTitle("Sudoku Game - by Saiful Islam");
     setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-    setSize(640, 640);
+    setSize(940, 940);
     setLayout(new BorderLayout());
 
     JPanel gridPanel=new JPanel(new GridLayout(n, n));
@@ -72,23 +75,29 @@ public class SudocuGame extends JFrame{
     JButton mediumBtn=new JButton("Medium");
     JButton hardBtn=new JButton("Hard");
     JButton darkModeBtn=new JButton("Toggle Dark Mode");
-
+    
     easyBtn.addActionListener(e ->{
+      startTimer(901);
       loadPuzzleWithDifficulty(n*n*3/4);
       resetColors();
       hint=5;
+      hintBtn.setEnabled(true);
       hintBtn.setText("Hint: " + hint);
     });
     mediumBtn.addActionListener(e -> {
+      startTimer(601);
       loadPuzzleWithDifficulty(n*n/2);
       resetColors();
       hint=4;
+      hintBtn.setEnabled(true);
       hintBtn.setText("Hint: " + hint);
     });
     hardBtn.addActionListener(e -> {
+      startTimer(300);
       loadPuzzleWithDifficulty(n*n/3+1);
       resetColors();
       hint=3;
+      hintBtn.setEnabled(true);
       hintBtn.setText("Hint: " + hint);
     });
 
@@ -99,6 +108,7 @@ public class SudocuGame extends JFrame{
     hintBtn=new JButton("Hint");
     
     solveBtn.addActionListener(e ->{
+        stopTimer();
       int[][] tempBoard=new int[n][n];
       copyBoard(initialBoard, tempBoard);
       if (solveSudoku(tempBoard)){
@@ -112,6 +122,9 @@ public class SudocuGame extends JFrame{
     clearBtn.addActionListener(e ->{
       clearGrid();
       isChecked=false;
+      stopTimer();
+      timerLabel.setText("Time: 00:00");
+
     });
 
     checkBtn.addActionListener(e ->{
@@ -174,6 +187,28 @@ public class SudocuGame extends JFrame{
             }
           }
         }
+        
+        // after coloring/setting backgrounds, check for full correct solution
+        boolean allCorrect = true;
+        readFromGrid(); // fills board[][]
+        for (int i = 0; i < n && allCorrect; i++) {
+          for (int j = 0; j < n; j++) {
+            if (board[i][j] == 0 || board[i][j] != solution[i][j]) {
+              allCorrect = false;
+              break;
+            }
+          }
+        }
+        if (allCorrect) {
+          // user solved within the time
+          stopTimer();
+          JOptionPane.showMessageDialog(this, "Congratulations!! You Won!!");
+          // optionally, lock the grid so they can't edit after win:
+          for (int i = 0; i < n; i++)
+            for (int j = 0; j < n; j++)
+              cells[i][j].setEditable(false);
+        }
+
       } else{
         resetColors();
       }
@@ -186,12 +221,17 @@ public class SudocuGame extends JFrame{
     });
 
     homeBtn.addActionListener(e ->{
+        stopTimer();
       this.dispose();
       SwingUtilities.invokeLater(SudocuGame::new);
     });
     
     hintBtn.addActionListener(e -> hint());
 
+    
+    timerLabel = new JLabel("Time: 00:00");
+    timerLabel.setFont(new Font("SansSerif", Font.BOLD, 18));
+      
 
     JPanel controlPanelTop=new JPanel();
     controlPanelTop.add(easyBtn);
@@ -205,7 +245,8 @@ public class SudocuGame extends JFrame{
     controlPanelBottom.add(checkBtn);
     controlPanelBottom.add(homeBtn);
 
-    
+    controlPanelTop.add(timerLabel);
+      
 //    JPanel controlPanelBottom2=new JPanel();
     controlPanelBottom.add(hintBtn);
     
@@ -218,6 +259,35 @@ public class SudocuGame extends JFrame{
     setVisible(true);
   }
   
+  // --- Timer Logic ---
+    private void startTimer(int seconds) {
+      timeleft = seconds;
+      if (timer != null) timer.stop();
+
+      timer = new Timer(1000, e -> {
+        if (timeleft <= 0) {
+          timer.stop();
+          timerLabel.setText("Time: 00:00");
+          JOptionPane.showMessageDialog(this, "⏳ Time's up!\n    You Lose!!");
+          return;
+        }
+        timeleft--;
+        
+        int minutes=timeleft/60;
+        int secondsLeft=timeleft%60;
+
+        timerLabel.setText(String.format("Time: %02d:%02d", minutes, secondsLeft));
+      });
+
+      timer.start();
+    }
+    private void stopTimer(){
+        if(timer!=null){
+            timer.stop();
+            timer=null;
+        }
+    }
+    
   // --- User Input for n ---
   private int getSudokuSize(){
     int n=0;
@@ -248,6 +318,7 @@ public class SudocuGame extends JFrame{
     return n;
   }
 
+
   private void toggleDarkMode(){
     isDarkMode=!isDarkMode;
     for (int i=0; i<n; i++)
@@ -277,9 +348,12 @@ public class SudocuGame extends JFrame{
       // JOptionPane.showMessageDialog(this, "This cell is already filled!");
       return;
     }
-    if(hint<=0) return;
     hint--;
     hintBtn.setText("Hint: " + hint);
+    if(hint<=0){
+        hintBtn.setEnabled(false);
+        return;
+    }
 
     int[][] tempBoard = new int[n][n];
     copyBoard(initialBoard, tempBoard);
