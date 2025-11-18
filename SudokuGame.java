@@ -21,7 +21,7 @@ public class SudocuGame extends JFrame{
   private Timer timer;
   private int timeleft;
   private JLabel timerLabel;
-
+  private int timenow=0;
 
   // Constructor
   public SudocuGame(){
@@ -77,7 +77,9 @@ public class SudocuGame extends JFrame{
     JButton darkModeBtn=new JButton("Toggle Dark Mode");
     
     easyBtn.addActionListener(e ->{
-      startTimer(901);
+      timenow=0;
+      startTimer(900);
+      timerLabel.setText("Time: 15:00");
       loadPuzzleWithDifficulty(n*n*3/4);
       resetColors();
       hint=5;
@@ -85,7 +87,9 @@ public class SudocuGame extends JFrame{
       hintBtn.setText("Hint: " + hint);
     });
     mediumBtn.addActionListener(e -> {
-      startTimer(601);
+      timenow=1;
+      startTimer(600);
+      timerLabel.setText("Time: 10:00");
       loadPuzzleWithDifficulty(n*n/2);
       resetColors();
       hint=4;
@@ -93,7 +97,9 @@ public class SudocuGame extends JFrame{
       hintBtn.setText("Hint: " + hint);
     });
     hardBtn.addActionListener(e -> {
+      timenow=-1;
       startTimer(300);
+      timerLabel.setText("Time: 05:00");
       loadPuzzleWithDifficulty(n*n/3+1);
       resetColors();
       hint=3;
@@ -123,7 +129,16 @@ public class SudocuGame extends JFrame{
       clearGrid();
       isChecked=false;
       stopTimer();
-      timerLabel.setText("Time: 00:00");
+      if(timenow==-1){
+        startTimer(300);
+        timerLabel.setText("Time: 05:00");
+      }else if(timenow==1){
+        startTimer(600);
+        timerLabel.setText("Time: 10:00");
+      }else{
+        startTimer(900);
+        timerLabel.setText("Time: 15:00");
+      }
 
     });
 
