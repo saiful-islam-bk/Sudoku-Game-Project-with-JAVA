@@ -64,7 +64,31 @@ public class SudocuGame extends JFrame{
             selectedCol = c;
           }
         });
+        
 
+        field.addKeyListener(new java.awt.event.KeyAdapter() {
+            @Override
+            public void keyTyped(java.awt.event.KeyEvent e) {
+                char c = e.getKeyChar();
+                String text = field.getText();
+
+                if (!Character.isDigit(c)) {
+                    e.consume();
+                    return;
+                }
+
+                if(n < 10){
+                    if (text.length() >= 1 || c == '0' || (c - '0' > n)) {
+                        e.consume();
+                    }
+                }else{
+                    if(text.length() >= 2) {
+                        e.consume();
+                    }
+                }
+            }
+        });
+        
         cells[row][col]=field;
         gridPanel.add(field);
       }
@@ -78,7 +102,7 @@ public class SudocuGame extends JFrame{
     
     easyBtn.addActionListener(e ->{
       timenow=0;
-      startTimer(900);
+      startTimer(305);
       timerLabel.setText("Time: 15:00");
       loadPuzzleWithDifficulty(n*n*3/4);
       resetColors();
@@ -88,8 +112,8 @@ public class SudocuGame extends JFrame{
     });
     mediumBtn.addActionListener(e -> {
       timenow=1;
-      startTimer(600);
-      timerLabel.setText("Time: 10:00");
+      startTimer(900);
+      timerLabel.setText("Time: 15:00");
       loadPuzzleWithDifficulty(n*n/2);
       resetColors();
       hint=4;
@@ -98,8 +122,8 @@ public class SudocuGame extends JFrame{
     });
     hardBtn.addActionListener(e -> {
       timenow=-1;
-      startTimer(300);
-      timerLabel.setText("Time: 05:00");
+      startTimer(900);
+      timerLabel.setText("Time: 15:00");
       loadPuzzleWithDifficulty(n*n/3+1);
       resetColors();
       hint=3;
@@ -280,6 +304,10 @@ public class SudocuGame extends JFrame{
       if (timer != null) timer.stop();
 
       timer = new Timer(1000, e -> {
+        if (timeleft == 300){
+         JOptionPane.showMessageDialog(this, "Only 5 minute left!!");
+         timerLabel.setForeground(Color.RED);
+        }
         if (timeleft <= 0) {
           timer.stop();
           timerLabel.setText("Time: 00:00");
